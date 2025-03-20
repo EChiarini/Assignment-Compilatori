@@ -1,11 +1,42 @@
 # Assignment-Compilatori
+## Setup
+```
+export LLVM_DIR=/folder/to/llvm-19/
+export ROOT_LABS=/folder/to/AssignmentX/
+```
+### Struttura Cartelle
+```
+Assignment_X/
+├── build/
+│   └── Makefile
+├── CMakeLists.txt
+├── test/
+│   └── esempi.ll
+```
+Dentro alla cartella `build`, eseguire il comando:
+```
+cmake -DLT_LLVM_INSTALL_DIR=$LLVM_DIR ../
+```
+Dentro alla cartella `test`, eseguire il comando:
+```
+make -C ../build/
+opt -load-pass-plugin ../build/libLocalOpts.so -p 'nome_passo' esempio.ll -o esempio.bc
+llvm-dis esempio.bc -o esempio_dopo_i_passi.ll
+cat esempio_dopo_i_passi.ll
+```
 
-## 1' Assignment
-
+## 1° Assignment
 ### Algebraic Identity
-Nome passo: algebraic-identity
+Nome passo: `algebraic-identity` \
+Esempio: `ai.ll`
 ### Strength Reduction
-Nome passo: strength-reduction
+Nome passo: `strength-reduction` \
+Esempio: `sr.ll`
 ### Multi-Instruction Optimization
-Nome passo: multi-opt
-## 2' Assignment
+Nome passo: `multi-opt` \
+Esempio: `mio.ll`
+### Tutto insieme
+Nome passo: `algebraic-identity,strength-reduction,multi-opt` \
+Esempio: `all.ll`
+
+## 2° Assignment
