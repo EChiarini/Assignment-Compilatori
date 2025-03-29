@@ -7,11 +7,18 @@ export ROOT_LABS=/folder/to/AssignmentX/
 ### Struttura Cartelle
 ```
 Assignment_X/
-├── build/
-│   └── Makefile
+├── build/ 
 ├── CMakeLists.txt
+├── AlgebraicIdentity.cpp
+├── StrengthReduction.cpp
+├── MultiOpt.cpp
 ├── test/
-│   └── esempi.ll
+│   └── ai.ll
+│   └── sr.ll
+│   └── mo.ll
+│   └── ai.sh
+│   └── sr.sh
+│   └── mo.sh
 ```
 Dentro alla cartella `build`, eseguire il comando:
 ```
@@ -24,6 +31,7 @@ opt -load-pass-plugin ../build/libLocalOpts.so -p 'nome_passo' esempio.ll -o ese
 llvm-dis esempio.bc -o esempio_dopo_i_passi.ll
 cat esempio_dopo_i_passi.ll
 ```
+Per semplicità, per ogni passo ho creato un `.sh` che riassume in un comando i primi tre comandi sopra
 
 ## 1° Assignment
 ### Algebraic Identity
@@ -34,7 +42,7 @@ Nome passo: `strength-reduction` \
 Esempio: `sr.ll`
 ### Multi-Instruction Optimization
 Nome passo: `multi-opt` \
-Esempio: `mio.ll`
+Esempio: `mo.ll`
 ### Tutto insieme
 Nome passo: `algebraic-identity,strength-reduction,multi-opt` \
 Esempio: `all.ll`
