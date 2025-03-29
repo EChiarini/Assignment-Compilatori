@@ -2,23 +2,17 @@
 ## Setup
 ```
 export LLVM_DIR=/folder/to/llvm-19/
-export ROOT_LABS=/folder/to/AssignmentX/
+export ROOT_LABS=/folder/to/Assignment_X/
 ```
 ### Struttura Cartelle
 ```
 Assignment_X/
 ├── build/ 
 ├── CMakeLists.txt
-├── AlgebraicIdentity.cpp
-├── StrengthReduction.cpp
-├── MultiOpt.cpp
+├── PassFile.cpp
 ├── test/
-│   └── ai.ll
-│   └── sr.ll
-│   └── mo.ll
-│   └── ai.sh
-│   └── sr.sh
-│   └── mo.sh
+│   └── example.ll
+│   └── run.sh
 ```
 Dentro alla cartella `build`, eseguire il comando:
 ```
