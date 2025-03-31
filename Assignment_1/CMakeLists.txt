@@ -36,7 +36,7 @@ endif()
 #add_library(LocalOpts SHARED LocalOpts.cpp)
 add_library(AlgebraicIdentity SHARED AlgebraicIdentity.cpp)
 add_library(StrengthReduction SHARED StrengthReduction.cpp)
-add_library(MultiMultiOpt SHARED MultiOpt.cpp)
+add_library(MultiOpt SHARED MultiOpt.cpp)
 
 # Allow undefined symbols in shared objects on Darwin (this is the default
 # behaviour on Linux)
@@ -44,5 +44,5 @@ target_link_libraries(AlgebraicIdentity
 "$<$<PLATFORM_ID:Darwin>:-undefined dynamic_lookup>")
 target_link_libraries(StrengthReduction
 "$<$<PLATFORM_ID:Darwin>:-undefined dynamic_lookup>")
-target_link_libraries(MultiMultiOpt
+target_link_libraries(MultiOpt
 "$<$<PLATFORM_ID:Darwin>:-undefined dynamic_lookup>")
