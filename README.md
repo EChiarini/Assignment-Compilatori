@@ -1,5 +1,5 @@
 Repository del gruppo: Chiarini Emiliano e Siotto Matilde
-# Assignment-Compilatori 1
+# 1° Assignment
 ## Setup
 ```
 export LLVM_DIR=/folder/to/llvm-19/
