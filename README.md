@@ -1,4 +1,4 @@
-# Assignment-Compilatori
+# Assignment-Compilatori 1
 ## Setup
 ```
 export LLVM_DIR=/folder/to/llvm-19/
@@ -27,15 +27,14 @@ cat esempio_dopo_i_passi.ll
 ```
 Per semplicità, per ogni passo ho creato un `run.sh` che riassume in un comando i primi tre comandi sopra
 
-## 1° Assignment
-### Algebraic Identity
+## Algebraic Identity
 Nome passo: `algebraic-identity` \
 Esempio: `ai.ll`
-### Strength Reduction
+## Strength Reduction
 Nome passo: `strength-reduction` \
 Esempio: `sr.ll`
-### Multi-Instruction Optimization
+## Multi-Instruction Optimization
 Nome passo: `multi-opt` \
 Esempio: `mo.ll`
 
-## 2° Assignment
+# 2° Assignment
