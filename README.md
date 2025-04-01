@@ -25,7 +25,8 @@ opt -load-pass-plugin ../build/libLocalOpts.so -p 'nome_passo' esempio.ll -o ese
 llvm-dis esempio.bc -o esempio_dopo_i_passi.ll
 cat esempio_dopo_i_passi.ll
 ```
-Per semplicità, per ogni passo ho creato un `run.sh` che riassume in un comando i primi tre comandi sopra
+Per semplicità, per ogni passo ho creato un `run.sh` che riassume in un comando i primi tre comandi sopra \
+I file che crea sono `(ai/sr/mo)2.ll`
 
 ## Algebraic Identity
 Nome passo: `algebraic-identity` \
