@@ -42,6 +42,16 @@ Esempio: `mo.ll`
 # 2° Assignment
 File PDF
 # 3° Assignment
-Stessa cosa del 1° Assignment
+Struttura uguale a quella del 1° Assignment
+L'unica cosa che cambia è l'esempio, dove sono partito da `verifyLICM.c`
+Tramite questa serie di comandi, genera il file .ll che viene passato al passo:
+```
+clang -Xclang -disable-O0-optnone -S -emit-llvm -O0 verifyLICM.c -o verifyLICM.ll
+opt -p mem2reg verifyLICM.ll -o loop.bc
+llvm-dis loop.bc -o loop.ll
+```
+E poi esegue il passo con la stessa struttura dei comandi usata nel 1° Assignment
+Per semplificare tutto, è stato creato il file `FakeLICM.sh` che esegue tutti i comandi (tranne il cat)
+Infatti questo 
 # 4° Assignment
 ...
