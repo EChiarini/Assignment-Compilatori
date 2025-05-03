@@ -52,6 +52,5 @@ llvm-dis loop.bc -o loop.ll
 ```
 E poi esegue il passo con la stessa struttura dei comandi usata nel 1° Assignment
 Per semplificare tutto, è stato creato il file `FakeLICM.sh` che esegue tutti i comandi (tranne il cat)
-Infatti questo 
 # 4° Assignment
-...
+To be continuated
