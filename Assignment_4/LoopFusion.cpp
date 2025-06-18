@@ -149,56 +149,6 @@ bool numeroIterazioniUguali(Loop *PrimoLoop, Loop *SecondoLoop, ScalarEvolution 
   return false;
 }
 
-
-bool assegnoNelFuturoLeggoNelPassato(Loop *PrimoLoop, Loop *SecondoLoop, DependenceInfo &DI, ScalarEvolution &SE) {
-  SmallPtrSet<LoadInst*, 32> PrimeIstruzioni;
-  SmallPtrSet<StoreInst*, 32> SecondeIstruzioni;
-
-  for (BasicBlock *BB1 : PrimoLoop->blocks()) {
-    for (Instruction &I1 : *BB1) {
-      Instruction *InstUno = &I1;
-      if (InstUno->getOpcode() == Instruction::Load) {
-        PrimeIstruzioni.insert(dyn_cast<LoadInst>(InstUno));
-      }
-    }
-  }
-
-  for (BasicBlock *BB2 : SecondoLoop->blocks()) {
-    for (Instruction &I2 : *BB2) {
-      Instruction *InstDue = &I2;
-      if (InstDue->getOpcode() == Instruction::Store) {
-        SecondeIstruzioni.insert(dyn_cast<StoreInst>(InstDue));
-      }
-    }
-  }
-
-  for (LoadInst *PrimaSingolaIstruzione : PrimeIstruzioni) {
-    for (StoreInst *SecondaSingolaIstruzione : SecondeIstruzioni) {
-      auto dep = DI.depends(PrimaSingolaIstruzione, SecondaSingolaIstruzione, true);
-      if (!dep) { continue; }
-
-      const SCEV *IndPrimo = SE.getSCEV(PrimaSingolaIstruzione->getPointerOperand());
-      const SCEV *IndSecondo = SE.getSCEV(SecondaSingolaIstruzione->getPointerOperand());
-
-      const SCEVAddRecExpr *tripCountPrimo = dyn_cast<SCEVAddRecExpr>(IndPrimo);
-      const SCEVAddRecExpr *tripCountSecondo = dyn_cast<SCEVAddRecExpr>(IndSecondo);
-
-      if (tripCountPrimo && tripCountSecondo) {
-        if (SE.isKnownPredicate(CmpInst::ICMP_EQ, tripCountPrimo->getStepRecurrence(SE), tripCountSecondo->getStepRecurrence(SE))) {
-          const SCEV *diff = SE.getMinusSCEV(SE.getAddExpr(tripCountPrimo->getStart(),tripCountPrimo->getStepRecurrence(SE)),
-                                             SE.getAddExpr(tripCountSecondo->getStart(),tripCountSecondo->getStepRecurrence(SE)));
-          
-          if (const SCEVConstant *Constdiff = dyn_cast<SCEVConstant>(diff)) {
-            if (Constdiff->getAPInt().getSExtValue() < 0) { return true; }
-          }
-        }
-      }
-    }
-  }
-  return false;
-}
-
-
 bool dipendenzeDistanzaNegativa(Loop *PrimoLoop, Loop *SecondoLoop, DependenceInfo &DI, ScalarEvolution &SE) {
     SmallPtrSet<Instruction*, 32> PrimeIstruzioni;
     SmallPtrSet<Instruction*, 32> SecondeIstruzioni;
@@ -206,7 +156,7 @@ bool dipendenzeDistanzaNegativa(Loop *PrimoLoop, Loop *SecondoLoop, DependenceIn
     for (BasicBlock *BB1 : PrimoLoop->blocks()) {
       for (Instruction &I1 : *BB1) {
         Instruction *InstUno = &I1;
-        if (InstUno->getOpcode() == Instruction::Store) {
+        if (InstUno->getOpcode() == Instruction::Store || InstUno->getOpcode() == Instruction::Load) {
           PrimeIstruzioni.insert(InstUno);
         }
       }
@@ -215,7 +165,7 @@ bool dipendenzeDistanzaNegativa(Loop *PrimoLoop, Loop *SecondoLoop, DependenceIn
     for (BasicBlock *BB2 : SecondoLoop->blocks()) {
       for (Instruction &I2 : *BB2) {
         Instruction *InstDue = &I2;
-        if (InstDue->getOpcode() == Instruction::Load) {
+        if (InstDue->getOpcode() == Instruction::Load || InstDue->getOpcode() == Instruction::Store) {
           SecondeIstruzioni.insert(InstDue);
         }
       }
@@ -232,15 +182,14 @@ bool dipendenzeDistanzaNegativa(Loop *PrimoLoop, Loop *SecondoLoop, DependenceIn
         
         if (const SCEVAddRecExpr *doveEffettivamenteInizioScrivere = dyn_cast<SCEVAddRecExpr>(doveScrivo)) {
           doveInizioScrivo = doveEffettivamenteInizioScrivere->getStart();
-        } else { continue;}
+        } else { continue; }
         if (const SCEVAddRecExpr *doveEffettivamenteInizioLeggere = dyn_cast<SCEVAddRecExpr>(doveLeggo)) {
           doveInizioLeggo = doveEffettivamenteInizioLeggere->getStart();
         } else { continue; }
             
         const SCEV *distanzaInizi = SE.getMinusSCEV(doveInizioScrivo, doveInizioLeggo);
-        if (const SCEVConstant *tempDistanza = dyn_cast<SCEVConstant>(distanzaInizi)) {
-          int64_t valoreDistanza = tempDistanza->getAPInt().getSExtValue();
-          if (valoreDistanza < 0){ return true; }
+        if (const SCEVConstant *Constdiff = dyn_cast<SCEVConstant>(distanzaInizi)) {
+          if (Constdiff->getAPInt().getSExtValue() < 0) { return true; }
         }
       }
     }
@@ -368,7 +317,7 @@ namespace { struct LoopFusion : PassInfoMixin<LoopFusion> {
           } else if (senzaGuardia(PrimoLoop, SecondoLoop)) {
             guardia = false;
           } else {
-            errs() << "CON/SENZA GUARDIA HANNO ISTRUZIONI TRA LORO \n OPPURE LE GUARDIE HANNO COND DIVERSA\n";
+            errs () << "CON/SENZA GUARDIA HANNO ISTRUZIONI TRA LORO \n OPPURE LE GUARDIE HANNO COND DIVERSA\n"; 
             continue;
           }
           //ORA SO CHE PRIMO LOOP è TALE E SECONDO LOOP è TALE
@@ -382,17 +331,17 @@ namespace { struct LoopFusion : PassInfoMixin<LoopFusion> {
             errs() << "DIVERSO NUMERO DI ITERAZIONI\n";
             continue;
           }
-          //DIPENDENZE A DISTANZA NEGATIVA
-          if (dipendenzeDistanzaNegativa(PrimoLoop, SecondoLoop, DI, SE) || assegnoNelFuturoLeggoNelPassato(PrimoLoop, SecondoLoop, DI, SE)) {
+          //DIPENDENZE A DISTANZA NEGATIVA 
+          if (dipendenzeDistanzaNegativa(PrimoLoop, SecondoLoop, DI, SE)) {
             errs() << "HANNO DIPENDENZE A DISTANZA NEGATIVA\n";
             continue;
           }
           
           if (unisciLoop(PrimoLoop, SecondoLoop, guardia)) {
-            mod = true;
-            errs() << "LOOP FUSION EFFETTUATA\n";
+          mod = true;
+          errs() << "LOOP FUSION EFFETTUATA\n";
           } else {
-            errs() << "LOOP FUSION FALLITA\n";
+            errs() << "UNIONE LOOP FALLITA\n";
           }
         }
       }
