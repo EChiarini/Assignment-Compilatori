@@ -20,7 +20,6 @@
 #include <map>
 #include <queue>
 
-
 using namespace llvm;
 
 BasicBlock *prendiHeader(Loop *Loop, bool guardia) {
@@ -149,6 +148,54 @@ bool numeroIterazioniUguali(Loop *PrimoLoop, Loop *SecondoLoop, ScalarEvolution 
   return false;
 }
 
+bool assegnoNelFuturoLeggoNelPassato(Loop *PrimoLoop, Loop *SecondoLoop, DependenceInfo &DI, ScalarEvolution &SE) {
+  SmallPtrSet<LoadInst*, 32> PrimeIstruzioni;
+  SmallPtrSet<StoreInst*, 32> SecondeIstruzioni;
+
+  for (BasicBlock *BB1 : PrimoLoop->blocks()) {
+    for (Instruction &I1 : *BB1) {
+      Instruction *InstUno = &I1;
+      if (InstUno->getOpcode() == Instruction::Load) {
+        PrimeIstruzioni.insert(dyn_cast<LoadInst>(InstUno));
+      }
+    }
+  }
+
+  for (BasicBlock *BB2 : SecondoLoop->blocks()) {
+    for (Instruction &I2 : *BB2) {
+      Instruction *InstDue = &I2;
+      if (InstDue->getOpcode() == Instruction::Store) {
+        SecondeIstruzioni.insert(dyn_cast<StoreInst>(InstDue));
+      }
+    }
+  }
+
+  for (LoadInst *PrimaSingolaIstruzione : PrimeIstruzioni) {
+    for (StoreInst *SecondaSingolaIstruzione : SecondeIstruzioni) {
+      auto dep = DI.depends(PrimaSingolaIstruzione, SecondaSingolaIstruzione, true);
+      if (!dep) { continue; }
+
+      const SCEV *IndPrimo = SE.getSCEV(PrimaSingolaIstruzione->getPointerOperand());
+      const SCEV *IndSecondo = SE.getSCEV(SecondaSingolaIstruzione->getPointerOperand());
+
+      const SCEVAddRecExpr *tripCountPrimo = dyn_cast<SCEVAddRecExpr>(IndPrimo);
+      const SCEVAddRecExpr *tripCountSecondo = dyn_cast<SCEVAddRecExpr>(IndSecondo);
+
+      if (tripCountPrimo && tripCountSecondo) {
+        if (SE.isKnownPredicate(CmpInst::ICMP_EQ, tripCountPrimo->getStepRecurrence(SE), tripCountSecondo->getStepRecurrence(SE))) {
+          const SCEV *diff = SE.getMinusSCEV(SE.getAddExpr(tripCountPrimo->getStart(),tripCountPrimo->getStepRecurrence(SE)),
+                                             SE.getAddExpr(tripCountSecondo->getStart(),tripCountSecondo->getStepRecurrence(SE)));
+          
+          if (const SCEVConstant *Constdiff = dyn_cast<SCEVConstant>(diff)) {
+            if (Constdiff->getAPInt().getSExtValue() < 0) { return true; }
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+
 bool dipendenzeDistanzaNegativa(Loop *PrimoLoop, Loop *SecondoLoop, DependenceInfo &DI, ScalarEvolution &SE) {
     SmallPtrSet<Instruction*, 32> PrimeIstruzioni;
     SmallPtrSet<Instruction*, 32> SecondeIstruzioni;
@@ -156,7 +203,7 @@ bool dipendenzeDistanzaNegativa(Loop *PrimoLoop, Loop *SecondoLoop, DependenceIn
     for (BasicBlock *BB1 : PrimoLoop->blocks()) {
       for (Instruction &I1 : *BB1) {
         Instruction *InstUno = &I1;
-        if (InstUno->getOpcode() == Instruction::Store || InstUno->getOpcode() == Instruction::Load) {
+        if (InstUno->getOpcode() == Instruction::Store) {
           PrimeIstruzioni.insert(InstUno);
         }
       }
@@ -165,7 +212,7 @@ bool dipendenzeDistanzaNegativa(Loop *PrimoLoop, Loop *SecondoLoop, DependenceIn
     for (BasicBlock *BB2 : SecondoLoop->blocks()) {
       for (Instruction &I2 : *BB2) {
         Instruction *InstDue = &I2;
-        if (InstDue->getOpcode() == Instruction::Load || InstDue->getOpcode() == Instruction::Store) {
+        if (InstDue->getOpcode() == Instruction::Load) {
           SecondeIstruzioni.insert(InstDue);
         }
       }
@@ -332,7 +379,7 @@ namespace { struct LoopFusion : PassInfoMixin<LoopFusion> {
             continue;
           }
           //DIPENDENZE A DISTANZA NEGATIVA 
-          if (dipendenzeDistanzaNegativa(PrimoLoop, SecondoLoop, DI, SE)) {
+          if (dipendenzeDistanzaNegativa(PrimoLoop, SecondoLoop, DI, SE) || assegnoNelFuturoLeggoNelPassato(PrimoLoop, SecondoLoop, DI, SE)) {
             errs() << "HANNO DIPENDENZE A DISTANZA NEGATIVA\n";
             continue;
           }
